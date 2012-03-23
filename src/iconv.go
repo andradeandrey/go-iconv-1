@@ -8,19 +8,21 @@ package iconv
 import "C"
 
 import (
-	"os"
-	"unsafe"
 	"bytes"
+	//"os"
+	"unsafe"
+	"errors"
+	"fmt"
 )
 
-var EILSEQ = os.Errno(int(C.EILSEQ))
-var E2BIG = os.Errno(int(C.E2BIG))
+var EILSEQ = int(C.EILSEQ)
+var E2BIG = errors.New(fmt.Sprintf("%d",C.E2BIG))
 
 type Iconv struct {
 	pointer C.iconv_t
 }
 
-func Open(tocode string, fromcode string) (*Iconv, os.Error) {
+func Open(tocode string, fromcode string) (*Iconv, error) {
 	ret, err := C.iconv_open(C.CString(tocode), C.CString(fromcode))
 	if err != nil {
 		return nil, err
@@ -28,12 +30,12 @@ func Open(tocode string, fromcode string) (*Iconv, os.Error) {
 	return &Iconv{ret}, nil
 }
 
-func (cd *Iconv) Close() os.Error {
+func (cd *Iconv) Close() error {
 	_, err := C.iconv_close(cd.pointer)
 	return err
 }
 
-func (cd *Iconv) Conv(input string) (result string, err os.Error) {
+func (cd *Iconv) Conv(input string) (result string, err error) {
 	var buf bytes.Buffer
 
 	if len(input) == 0 {
